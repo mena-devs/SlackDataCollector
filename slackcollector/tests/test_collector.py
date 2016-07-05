@@ -30,7 +30,7 @@ from slackcollector.collector import Collector
 class TestCollector(unittest.TestCase):
 
     def setUp(self):
-        self.config_file = 'config.example.yml'
+        self.config_file = 'config/config.example.yml'
         self.collector_inst = Collector(self.config_file)
 
     def test_load_config_file_success(self):

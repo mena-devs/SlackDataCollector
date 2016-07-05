@@ -24,6 +24,7 @@
 
 """The main Collector module."""
 
+import argparse
 import yaml
 import os
 import io
@@ -72,9 +73,7 @@ class Collector:
 
     def load_config(self, config_file_path):
         """Parse the configuration file."""
-        config_file = os.path.join(os.path.dirname(__file__),
-                                   '../config/' + config_file_path)
-        config = yaml.safe_load(open(config_file))
+        config = yaml.safe_load(open(config_file_path))
         self.data_dir = config['storage']['data_dir']
         self.data_file_prefix = config['storage']['data_file_prefix']
         slack.api_token = config['secure']['slack_group_token']
@@ -123,7 +122,13 @@ class Collector:
 
 
 if __name__ == "__main__":
-    collector = Collector('config.yml')
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-c', '--config', type=str,
+                        default='config.yml',
+                        help="Path to the configuration file ")
+    args = parser.parse_args()
+    collector = Collector(args.config)
     data = collector.collect_data()
     data = collector.anonymize_data(data)
     collector.write_data(data)
