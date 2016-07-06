@@ -44,21 +44,8 @@ class Collector:
 
     def __init__(self, config_file=None):
         """Load the config file and handle potential errors."""
+        self.load_config(config_file)
         self.configure_logging()
-        try:
-            self.load_config(config_file)
-        except IOError:
-            self.logger.error(
-                'Configuration file does not exist. Make sure'
-                ' the file "{}" exists and is '
-                'configured correctly.'.format(config_file))
-            sys.exit(1)
-        except yaml.scanner.ScannerError:
-            self.logger.error(
-                'Corrupted configuration file - could not be '
-                'parsed make sure "{}" is configured '
-                'correctly.'.format(config_file))
-            sys.exit(2)
 
     def configure_logging(self, level=logging.DEBUG):
         """Instanciate and configure a logger."""
@@ -74,10 +61,23 @@ class Collector:
         """Parse the configuration file."""
         config_file = os.path.join(os.path.dirname(__file__),
                                    '../config/' + config_file_path)
-        config = yaml.safe_load(open(config_file))
-        self.data_dir = config['storage']['data_dir']
-        self.data_file_prefix = config['storage']['data_file_prefix']
-        slack.api_token = config['secure']['slack_group_token']
+        try:
+            config = yaml.safe_load(open(config_file))
+            self.data_dir = config['storage']['data_dir']
+            self.data_file_prefix = config['storage']['data_file_prefix']
+            slack.api_token = config['secure']['slack_group_token']
+        except IOError:
+            self.logger.error(
+                'Configuration file does not exist. Make sure'
+                ' the file "{}" exists and is '
+                'configured correctly.'.format(config_file))
+            sys.exit(1)
+        except yaml.scanner.ScannerError:
+            self.logger.error(
+                'Corrupted configuration file - could not be '
+                'parsed make sure "{}" is configured '
+                'correctly.'.format(config_file))
+            sys.exit(2)
 
     def collect_data(self):
         """Query the Slack API and retrieve user data."""
