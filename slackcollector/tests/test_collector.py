@@ -24,6 +24,9 @@ import json
 import os
 import unittest
 
+import mock
+import slack.users
+
 from slackcollector.collector import Collector
 
 
@@ -32,6 +35,7 @@ class TestCollector(unittest.TestCase):
     def setUp(self):
         self.config_file = 'config.example.yml'
         self.collector_inst = Collector(self.config_file)
+        self.collector_inst.logger = mock.MagicMock()
 
     def test_load_config_file_success(self):
         self.collector_inst.load_config(self.config_file)
@@ -42,8 +46,8 @@ class TestCollector(unittest.TestCase):
         """
         Test a non existent configuration file
         """
-        self.assertRaises(IOError, self.collector_inst.load_config,
-                          '/boguspath')
+        self.assertRaises(SystemExit,
+                          self.collector_inst.load_config, '/boguspath')
 
     def test_anonymize_data_success(self):
         """
@@ -61,6 +65,23 @@ class TestCollector(unittest.TestCase):
             # empty the we have cleared these keys and their values
             self.assertFalse(sensitive_keys_set & set(item))
 
+    def test_collect_data_success(self):
+        """
+        Test that the correct API call is made in the `collect_data` method
+        """
+        self.collector_inst.logger = mock.MagicMock()
+        slack.users.list = mock.MagicMock(return_value='{}')
+        data = self.collector_inst.collect_data()
+        self.assertEqual(data, "{}")
+
+    def test_load_invalid_config_failure(self):
+        """
+        Test loading an invalid configuration file
+        """
+        # TODO(joehakimrahme): Fix this monstrosity once PR #10 is merged.
+        invalid_config = '../slackcollector/tests/_test_data/invalid_conf.yml'
+        self.assertRaises(SystemExit,
+                          self.collector_inst.load_config, invalid_config)
 
 if __name__ == '__main__':
     unittest.main()
